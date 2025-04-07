@@ -1,35 +1,35 @@
 (() => {
     const init = () => {
-  
-      if (!isHomePage()) {
-        console.log("wrong page");
-        return;
-    }
-  
-      const savedProducts = localStorage.getItem("ebProductsData");
-      const favorites = JSON.parse(localStorage.getItem("ebFavorites")) || [];
-  
-      if (savedProducts) {
-        const products = JSON.parse(savedProducts);
-        self.buildHTML();
-        self.buildCSS();
-        self.renderProducts(products, favorites);
-      } else {
-        fetch(
-          "https://gist.githubusercontent.com/sevindi/8bcbde9f02c1d4abe112809c974e1f49/raw/9bf93b58df623a9b16f1db721cd0a7a539296cf0/products.json"
-        )
-          .then((response) => response.json())
-          .then((products) => {
-            localStorage.setItem("ebProductsData", JSON.stringify(products));
 
+        if (!isHomePage()) {
+            console.log("wrong page");
+            return;
+        }
+
+        const savedProducts = localStorage.getItem("ebProductsData");
+        const favorites = JSON.parse(localStorage.getItem("ebFavorites")) || [];
+
+        if (savedProducts) {
+            const products = JSON.parse(savedProducts);
             self.buildHTML();
             self.buildCSS();
             self.renderProducts(products, favorites);
-          })
-          .catch((error) => {
-            console.error("Error fetching products:", error);
-          });
-      }
+        } else {
+            fetch(
+                "https://gist.githubusercontent.com/sevindi/8bcbde9f02c1d4abe112809c974e1f49/raw/9bf93b58df623a9b16f1db721cd0a7a539296cf0/products.json"
+            )
+                .then((response) => response.json())
+                .then((products) => {
+                    localStorage.setItem("ebProductsData", JSON.stringify(products));
+
+                    self.buildHTML();
+                    self.buildCSS();
+                    self.renderProducts(products, favorites);
+                })
+                .catch((error) => {
+                    console.error("Error fetching products:", error);
+                });
+        }
     };
 
     const buildHTML = () => {
@@ -126,25 +126,29 @@
                     ? Math.round(
                         ((product.original_price - product.price) /
                             product.original_price) *
-                            100
+                        100
                     )
                     : 0;
 
             productsHTML += `
                 <div class="owl-item ng-tns-c125-3 ng-trigger ng-trigger-autoHeight active ng-star-inserted" style="width: 296.667px; margin-right: 20px;">
                     <div class="ins-web-smart-recommender-box-item ng-star-inserted">
-                        <div event-collection="true" class="ins-product-box ins-element-link ins-add-to-cart-wrapper ins-sr-api" ins-product-id="${product.id}">
+                        <div event-collection="true" class="ins-product-box ins-element-link ins-add-to-cart-wrapper ins-sr-api" ins-product-id="${product.id
+                }">
                             <eb-carousel-product-item class="ng-star-inserted">
                                 <div class="product-item">
                                     <eb-generic-link class="product-item-anchor" event-collection="true">
-                                        <a class="product-item-anchor ng-star-inserted" href="${product.url}" target="_blank">
+                                        <a class="product-item-anchor ng-star-inserted" href="${product.url
+                }" target="_blank">
                                             <figure class="product-item__img ng-star-inserted">
                                                 <span class="d-flex flex-column align-items-start justify-content-end position-absolute bottom-0">
                                                     <eb-new-product-badge class="mb-3"></eb-new-product-badge>
                                                 </span>
                                                 <cx-media alt="Popular" format="product" class="is-initialized">
-                                                    <img class="ng-star-inserted ls-is-cached lazyloaded" alt="${product.name}" src="${product.img}">
+                                                    <img class="ng-star-inserted ls-is-cached lazyloaded" alt="${product.name
+                }" src="${product.img}">
                                                 </cx-media>
+                                                <div class="d-flex ml-4"></div>
                                             </figure>
                                             <div class="product-item-content ng-star-inserted">
                                                 <eb-generic-link class="product-item-anchor">
@@ -156,20 +160,36 @@
                                                     </a>
                                                 </eb-generic-link>
                                                 <div class="product-item__price">
-                                                    ${
-                                                        product.original_price > product.price
-                                                            ? `<div class="d-flex align-items-center ng-star-inserted">
+                                                    ${product.original_price > product.price
+                    ? `<div class="d-flex align-items-center ng-star-inserted">
                                                                 <span class="product-item__old-price ng-star-inserted">${product.original_price.toFixed(2)} TL</span>
                                                                 <span class="product-item__percent carousel-product-price-percent ml-2 ng-star-inserted">%${discountPercentage} <i class="icon icon-decrease"></i></span>
                                                             </div>
                                                             <span class="product-item__new-price discount-product ng-star-inserted">${product.price.toFixed(2)} TL</span>`
-                                                            : `<span class="product-item__new-price ng-star-inserted">${product.price.toFixed(2)} TL</span>`
-                                                    }
+                    : `<span class="product-item__new-price ng-star-inserted">${product.price.toFixed(2)} TL</span>`
+                }
                                                 </div>
                                             </div>
                                             <div class="product-list-promo ng-star-inserted"></div>
                                         </a>
                                     </eb-generic-link>
+                                    <eb-add-to-wish-list>
+                      <a href="javascript:void(0)" class="ng-star-inserted" data-product-id="${product.id
+                }">
+                        <div class="heart ng-star-inserted">
+                          ${isFavorite
+                    ? `<img src="assets/svg/added-favorite.svg" alt="heart fill" class="heart-icon">
+                             <img src="assets/svg/added-favorite-hover.svg" alt="heart fill" class="heart-icon hovered">`
+                    : `<img id="default-favorite" src="assets/svg/default-favorite.svg" alt="heart" class="heart-icon">
+                             <img src="assets/svg/default-hover-favorite.svg" alt="heart" class="heart-icon hovered">`
+                }
+                          <div class="toolbox">
+                            <div class="toolbox-triangle"></div>
+                            <span>Listelerimi güncelle</span>
+                          </div>
+                        </div>
+                      </a>
+                    </eb-add-to-wish-list>
                                     <div class="product-item-content">
                                         <div class="product-item__price">
                                             <div class="ins-add-to-cart-wrapper" ins-product-id="${product.id}">
@@ -199,10 +219,9 @@
         buildCSS,
         renderProducts,
     };
-  
+
     const isHomePage = () =>
-      window.location.pathname === "/" || window.location.pathname === "/index.html";
-  
+        window.location.pathname === "/" || window.location.pathname === "/index.html";
+
     init();
-  })();
-  
+})();
