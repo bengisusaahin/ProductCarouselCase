@@ -328,7 +328,6 @@
             }
 
             if (swiperNextButton) {
-                console.log(scrollPosition, maxScroll);
                 if (scrollPosition >= maxScroll) {
                     swiperNextButton.classList.add("disabled");
                 } else {
@@ -479,7 +478,6 @@
 
             const totalItems = owlItems.length;
             const newMaxScroll = 8 * itemWidth;
-            console.log(newMaxScroll);
 
             if (scrollPosition > newMaxScroll) {
                 scrollPosition = newMaxScroll;
