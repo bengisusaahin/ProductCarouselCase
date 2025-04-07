@@ -14,6 +14,7 @@
             self.buildHTML();
             self.buildCSS();
             self.renderProducts(products, favorites);
+            self.setEvents();
         } else {
             fetch(
                 "https://gist.githubusercontent.com/sevindi/8bcbde9f02c1d4abe112809c974e1f49/raw/9bf93b58df623a9b16f1db721cd0a7a539296cf0/products.json"
@@ -214,10 +215,53 @@
         }
     };
 
+    const setEvents = (products) => {
+        const hearts = document.querySelectorAll("eb-add-to-wish-list a");
+        hearts.forEach((heart) => {
+            heart.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const productId = parseInt(this.getAttribute("data-product-id"));
+                const favorites = JSON.parse(localStorage.getItem("ebFavorites")) || [];
+
+                const index = favorites.indexOf(productId);
+                const heartContainer = this.querySelector(".heart");
+
+                if (index === -1) {
+                    favorites.push(productId);
+
+                    heartContainer.innerHTML = `
+              <img src="assets/svg/added-favorite.svg" alt="heart fill" class="heart-icon">
+              <img src="assets/svg/added-favorite-hover.svg" alt="heart fill" class="heart-icon hovered">
+              <div class="toolbox">
+                <div class="toolbox-triangle"></div>
+                <span>Listelerimi güncelle</span>
+              </div>
+            `;
+                } else {
+                    favorites.splice(index, 1);
+
+                    heartContainer.innerHTML = `
+              <img id="default-favorite" src="assets/svg/default-favorite.svg" alt="heart" class="heart-icon">
+              <img src="assets/svg/default-hover-favorite.svg" alt="heart" class="heart-icon hovered">
+              <div class="toolbox">
+                <div class="toolbox-triangle"></div>
+                <span>Listelerimi güncelle</span>
+              </div>
+            `;
+                }
+
+                localStorage.setItem("ebFavorites", JSON.stringify(favorites));
+            });
+        });
+    };
+
     const self = {
         buildHTML,
         buildCSS,
         renderProducts,
+        setEvents,
     };
 
     const isHomePage = () =>
