@@ -26,6 +26,7 @@
                     self.buildHTML();
                     self.buildCSS();
                     self.renderProducts(products, favorites);
+                    self.setEvents(products);
                 })
                 .catch((error) => {
                     console.error("Error fetching products:", error);
@@ -74,7 +75,6 @@
             section2A.insertAdjacentHTML("afterbegin", html);
         }
     };
-
 
     const buildCSS = () => {
         const style = document.createElement("style");
@@ -254,6 +254,241 @@
 
                 localStorage.setItem("ebFavorites", JSON.stringify(favorites));
             });
+        });
+
+        const productLinks = document.querySelectorAll(".product-item-anchor");
+        productLinks.forEach((link) => {
+            link.addEventListener("click", function (e) {
+                if (!window.isDragging) {
+                    return true;
+                } else {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+
+        let scrollPosition = 0;
+        const carousel = document.getElementById("product-carousel");
+        if (!carousel) return;
+
+        const owlItems = document.querySelectorAll(".owl-item");
+        if (owlItems.length === 0) return;
+
+        const itemWidth =
+            owlItems[0].getBoundingClientRect().width +
+            parseInt(getComputedStyle(owlItems[0]).marginRight);
+
+        const owlCarousel = document.querySelector(".owl-carousel");
+        const stageOuter = document.querySelector(".owl-stage-outer");
+        const stageWidth = stageOuter
+            ? stageOuter.getBoundingClientRect().width
+            : 0;
+        const visibleItems = Math.floor(stageWidth / itemWidth);
+
+        const totalItems =
+            JSON.parse(localStorage.getItem("ebProductsData") || "[]")?.length || 8;
+
+        const maxScroll = Math.max(0, (totalItems - visibleItems) * itemWidth);
+
+        function animatedScroll(position) {
+            carousel.style.transition = "transform 0.5s ease";
+            carousel.style.transform = `translateX(-${position}px)`;
+        }
+
+        function updateButtonStates() {
+            const prevButton = document.getElementById("carousel-prev");
+            const nextButton = document.getElementById("carousel-next");
+
+            if (prevButton) {
+                if (scrollPosition <= 0) {
+                    prevButton.classList.add("disabled");
+                } else {
+                    prevButton.classList.remove("disabled");
+                }
+            }
+
+            if (nextButton) {
+                if (scrollPosition >= maxScroll) {
+                    nextButton.classList.add("disabled");
+                } else {
+                    nextButton.classList.remove("disabled");
+                }
+            }
+
+            const swiperPrevButton = document.querySelector(".swiper-prev");
+            const swiperNextButton = document.querySelector(".swiper-next");
+
+            if (swiperPrevButton) {
+                if (scrollPosition <= 0) {
+                    swiperPrevButton.classList.add("disabled");
+                } else {
+                    swiperPrevButton.classList.remove("disabled");
+                }
+            }
+
+            if (swiperNextButton) {
+                console.log(scrollPosition, maxScroll);
+                if (scrollPosition >= maxScroll) {
+                    swiperNextButton.classList.add("disabled");
+                } else {
+                    swiperNextButton.classList.remove("disabled");
+                }
+            }
+        }
+
+        const prevButton = document.getElementById("carousel-prev");
+        const nextButton = document.getElementById("carousel-next");
+
+        if (prevButton) {
+            prevButton.addEventListener("click", () => {
+                if (scrollPosition <= 0) return;
+
+                scrollPosition = Math.max(0, scrollPosition - itemWidth);
+                animatedScroll(scrollPosition);
+                updateButtonStates();
+            });
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener("click", () => {
+                if (scrollPosition >= maxScroll) return;
+
+                scrollPosition = Math.min(maxScroll, scrollPosition + itemWidth);
+                animatedScroll(scrollPosition);
+                updateButtonStates();
+            });
+        }
+
+        const swiperPrevButton = document.querySelector(".swiper-prev");
+        const swiperNextButton = document.querySelector(".swiper-next");
+
+        if (swiperPrevButton) {
+            swiperPrevButton.addEventListener("click", () => {
+                if (scrollPosition <= 0) return;
+
+                scrollPosition = Math.max(0, scrollPosition - itemWidth);
+                animatedScroll(scrollPosition);
+                updateButtonStates();
+            });
+        }
+
+        if (swiperNextButton) {
+            swiperNextButton.addEventListener("click", () => {
+                if (scrollPosition >= maxScroll) return;
+
+                scrollPosition = Math.min(maxScroll, scrollPosition + itemWidth);
+                animatedScroll(scrollPosition);
+                updateButtonStates();
+            });
+        }
+
+        window.isDragging = false;
+        let startX = 0;
+        let startScrollPosition = 0;
+        let moveThreshold = 5;
+        let hasMoved = false;
+
+        owlCarousel.addEventListener("mousedown", (e) => {
+            if (
+                e.target.closest("button") ||
+                e.target.closest("eb-add-to-wish-list a")
+            ) {
+                return;
+            }
+
+            window.isDragging = true;
+            startX = e.clientX;
+            startScrollPosition = scrollPosition;
+            owlCarousel.style.cursor = "grabbing";
+            hasMoved = false;
+
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!window.isDragging) return;
+
+            const deltaX = e.clientX - startX;
+
+            if (Math.abs(deltaX) > moveThreshold) {
+                hasMoved = true;
+            }
+
+            if (hasMoved) {
+                let newPosition = startScrollPosition - deltaX;
+
+                newPosition = Math.max(0, Math.min(maxScroll, newPosition));
+
+                carousel.style.transition = "none";
+                carousel.style.transform = `translateX(-${newPosition}px)`;
+            }
+        });
+
+        document.addEventListener("mouseup", (e) => {
+            if (!window.isDragging) return;
+
+            if (!hasMoved) {
+                const clickedItem = e.target.closest(".product-item-anchor");
+                if (clickedItem && clickedItem.href) {
+                    window.open(clickedItem.href, "_blank");
+                }
+            } else {
+                const transformMatrix = new DOMMatrix(
+                    getComputedStyle(carousel).transform
+                );
+                const currentPosition = -transformMatrix.m41;
+
+                scrollPosition = Math.round(currentPosition / itemWidth) * itemWidth;
+
+                scrollPosition = Math.max(0, Math.min(maxScroll, scrollPosition));
+
+                animatedScroll(scrollPosition);
+                updateButtonStates();
+            }
+
+            window.isDragging = false;
+            hasMoved = false;
+            owlCarousel.style.cursor = "grab";
+        });
+
+        const images = owlCarousel.querySelectorAll("img");
+        images.forEach((img) => {
+            img.addEventListener("dragstart", (e) => {
+                e.preventDefault();
+            });
+        });
+
+        updateButtonStates();
+
+        window.addEventListener("resize", () => {
+            if (!carousel) return;
+
+            const owlItems = document.querySelectorAll(".owl-item");
+            if (owlItems.length === 0) return;
+
+            const itemWidth =
+                owlItems[0].getBoundingClientRect().width +
+                parseInt(getComputedStyle(owlItems[0]).marginRight);
+
+            const stageOuter = document.querySelector(".owl-stage-outer");
+            const stageWidth = stageOuter
+                ? stageOuter.getBoundingClientRect().width
+                : 0;
+            const visibleItems = Math.floor(stageWidth / itemWidth);
+
+            const totalItems = owlItems.length;
+            const newMaxScroll = 8 * itemWidth;
+            console.log(newMaxScroll);
+
+            if (scrollPosition > newMaxScroll) {
+                scrollPosition = newMaxScroll;
+                animatedScroll(scrollPosition);
+            }
+
+            maxScroll = newMaxScroll;
+
+            updateButtonStates();
         });
     };
 
